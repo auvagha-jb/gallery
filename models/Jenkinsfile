@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+    tools {
+        nodejs '19.1.0'
+    }
+    environment {
+        HEROKU_APP = 'https://ip-1-nodejs-heroku.herokuapp.com/'
+        GITHUB_REPO = 'https://github.com/auvagha-jb/gallery'
+    }
+    stages {
+        stage('Clone Project') {
+            steps {
+                git 'https://github.com/auvagha-jb/gallery'
+            }
+        }
+        stage('Install modules') {
+            steps {
+                sh 'npm install'
+            }
+        }
+        stage('Run Tests') {
+            steps {
+                sh 'npm test'
+            }
+        }
+        stage('Deploy to Heroku') {
+            steps {
+                sh 'git push heroku main'
+            }
+        }
+        stage('Run npm server') {
+            steps {
+                sh 'node server.js'
+            }
+        }
+    }
+    post {
+        success {
+             slackSend color: "good", message: "Success for build #${BUILD_NUMBER} \n App Url: ${HEROKU_APP}"
+        }
+    }
+}
