@@ -13,7 +13,7 @@ pipeline {
                 git 'https://github.com/auvagha-jb/gallery'
             }
         }
-        stage('Install modules') {
+        stage('Install dependencies') {
             steps {
                 sh 'npm install'
             }
@@ -25,18 +25,18 @@ pipeline {
         }
         stage('Deploy to Heroku') {
             steps {
-                sh 'git push heroku main'
-            }
-        }
-        stage('Run npm server') {
-            steps {
-                sh 'node server.js'
+                withCredentials([usernameColonPassword(credentialsId: 'heroku', variable: 'HEROKU_CREDENTIALS' )]){
+                    sh "git push https://${HEROKU_CREDENTIALS}@git.heroku.com/ip-1-nodejs-heroku.git master"
+                }
             }
         }
     }
     post {
         success {
-             slackSend color: "good", message: "Success for build #${BUILD_NUMBER} \n App Url: ${HEROKU_APP}"
+            slackSend color: "good", message: "Success build for ${JOB_NAME} build id: #${BUILD_ID} \n App Url: ${HEROKU_APP} \n Github repo: ${GITHUB_REPO}"
+        }
+        failure {
+            emailext body: "Build id: #${BUILD_ID} for ${JOB_NAME} failed", subject: 'Buiild Failed', to: 'jerrybenjamin007@gmail.com'
         }
     }
 }
